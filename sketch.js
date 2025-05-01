@@ -16,6 +16,8 @@ let rectWidth = 8 * scale; // 8' in pixels
 let rectHeight = 4 * scale; // 4' in pixels
 let isVertical = true;
 
+let permanentRectangles = []; // Store permanent rectangles and their scores
+
 function preload() {
   // Preload all images
   for (let i = 1; i <= totalImages; i++) {
@@ -75,6 +77,18 @@ function draw() {
     noFill();
     stroke(0, 255, 0); // Green outline
     rect(mouseX - rectWidth / 2, mouseY - rectHeight / 2, rectWidth, rectHeight);
+  }
+
+  // Draw all permanent rectangles with their scores
+  for (let garden of permanentRectangles) {
+    noFill();
+    stroke(255, 0, 0); // Red outline for permanent rectangles
+    rect(garden.x - garden.w / 2, garden.y - garden.h / 2, garden.w, garden.h);
+    fill(255, 255, 255, 200); // Semi-transparent background for text
+    noStroke();
+    textSize(12);
+    textAlign(CENTER, CENTER);
+    text(`Score: ${garden.score}`, garden.x, garden.y);
   }
 }
 
@@ -245,5 +259,38 @@ function keyPressed() {
     rectWidth = max(1, rectWidth - (isVertical ? 1 : 2));
     rectHeight = max(1, rectHeight - (isVertical ? 2 : 1));
     console.log(`Rectangle size decreased to: ${rectWidth}x${rectHeight}`);
+  } else if (key === 'c' || key === 'C') {
+    // Calculate the score of the rectangle
+    if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+      let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+      console.log(`Rectangle score: ${score}`);
+
+      // Store the rectangle and its score
+      permanentRectangles.push({
+        x: mouseX,
+        y: mouseY,
+        w: rectWidth,
+        h: rectHeight,
+        score: score
+      });
+    }
   }
+}
+
+function calculateRectangleScore(x, y, w, h) {
+  let score = 0;
+  heatMap.loadPixels();
+
+  // Iterate over the pixels within the rectangle
+  for (let i = floor(x - w / 2); i < floor(x + w / 2); i++) {
+    for (let j = floor(y - h / 2); j < floor(y + h / 2); j++) {
+      if (i >= 0 && i < width && j >= 0 && j < height) {
+        let index = (i + j * width) * 4;
+        let brightness = heatMap.pixels[index]; // Grayscale value (0-255)
+        score += brightness; // Add brightness to the score
+      }
+    }
+  }
+
+  return score;
 }
