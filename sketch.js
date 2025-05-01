@@ -8,6 +8,14 @@ let heatMap; // Final composite heat map
 let loaded = 0; // Counter for loaded images
 let threshold = 200; // Brightness threshold (0-255) to determine sunny vs shady
 
+// Calculate scale: 19' = 192 pixels, so 1' = 192 / 19 pixels
+const scale = 192 / 19;
+
+// Set initial rectangle dimensions based on scale
+let rectWidth = 8 * scale; // 8' in pixels
+let rectHeight = 4 * scale; // 4' in pixels
+let isVertical = true;
+
 function preload() {
   // Preload all images
   for (let i = 1; i <= totalImages; i++) {
@@ -66,9 +74,8 @@ function draw() {
   if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
     noFill();
     stroke(0, 255, 0); // Green outline
-    rect(mouseX - 100, mouseY - 200, 200, 400);
+    rect(mouseX - rectWidth / 2, mouseY - rectHeight / 2, rectWidth, rectHeight);
   }
-  
 }
 
 function generateHeatMap() {
@@ -223,5 +230,20 @@ function keyPressed() {
   } else if (key === 's' || key === 'S') {
     saveCanvas('sun_study_heatmap', 'png');
     console.log("Heatmap saved!");
+  } else if (key === ' ') {
+    // Flip rectangle orientation
+    isVertical = !isVertical;
+    [rectWidth, rectHeight] = [rectHeight, rectWidth];
+    console.log("Rectangle orientation flipped");
+  } else if (key === '+' || key === '=') {
+    // Increase rectangle size
+    rectWidth += isVertical ? 1 : 2;
+    rectHeight += isVertical ? 2 : 1;
+    console.log(`Rectangle size increased to: ${rectWidth}x${rectHeight}`);
+  } else if (key === '-') {
+    // Decrease rectangle size
+    rectWidth = max(1, rectWidth - (isVertical ? 1 : 2));
+    rectHeight = max(1, rectHeight - (isVertical ? 2 : 1));
+    console.log(`Rectangle size decreased to: ${rectWidth}x${rectHeight}`);
   }
 }
