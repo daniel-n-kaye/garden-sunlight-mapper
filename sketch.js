@@ -24,8 +24,8 @@ function preload() {
 }
 
 function setup() {
-  // Create canvas with size of the first image
-  // Note: This assumes all images are the same size
+
+  // create canvas
   createCanvas(images[0].width, images[0].height);
   
   // Create heatmap image with same dimensions
@@ -61,6 +61,14 @@ function draw() {
       displayHoverInfo();
     }
   }
+
+  // Draw a rectangle centered on the cursor
+  if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+    noFill();
+    stroke(0, 255, 0); // Green outline
+    rect(mouseX - 100, mouseY - 200, 200, 400);
+  }
+  
 }
 
 function generateHeatMap() {
