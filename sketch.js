@@ -162,10 +162,9 @@ function drawLegend() {
   
   // Draw legend gradient
   for (let y = 0; y < legendHeight; y++) {
-    // Map y position to sunny hours (from totalImages to 0)
-    let sunnyHours = map(y, 0, legendHeight, totalImages, 0);
-    // Map sunny hours to grayscale value
-    let val = map(sunnyHours, 0, totalImages, 0, 255);
+    // Map y position to percentage (0% to 100%)
+    let percentage = map(y, 0, legendHeight, 100, 0);
+    let val = map(percentage, 0, 100, 0, 255); // Map percentage to grayscale value
     
     fill(val);
     noStroke();
@@ -177,19 +176,12 @@ function drawLegend() {
   textSize(12);
   textAlign(RIGHT, CENTER);
   
-  // Top label (always sunny)
-  text(`${totalImages} hours of sun`, startX - 5, startY);
-  
-  // Middle labels
-  for (let i = 1; i < totalImages; i++) {
-    if (i % 2 === 0 || totalImages <= 6) { // Only show even numbers if many images
-      let y = map(i, totalImages, 0, startY, startY + legendHeight);
-      text(`${totalImages - i} hours`, startX - 5, y);
-    }
+  // Add percentage labels (0% to 100%)
+  for (let i = 0; i <= 10; i++) {
+    let percentage = i * 10; // 0%, 10%, ..., 100%
+    let y = map(percentage, 0, 100, startY + legendHeight, startY);
+    text(`${percentage}%`, startX - 5, y);
   }
-  
-  // Bottom label (never sunny)
-  text("0 hours of sun", startX - 5, startY + legendHeight);
 }
 
 // Function to display hover information
