@@ -77,6 +77,21 @@ function draw() {
     noFill();
     stroke(0, 255, 0); // Green outline
     rect(mouseX - rectWidth / 2, mouseY - rectHeight / 2, rectWidth, rectHeight);
+
+    // Calculate the score and daylight percentage for the rectangle at the mouse position
+    let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+    let daylightPercentage = map(score / (rectWidth * rectHeight), 0, 255, 0, 100);
+
+    // Display the score and daylight percentage at the mouse cursor
+    fill(255, 255, 255, 220);
+    stroke(0);
+    rect(mouseX + 10, mouseY - 30, 120, 40); // Background for text
+    noStroke();
+    fill(0);
+    textSize(12);
+    textAlign(LEFT, CENTER);
+    text(`Daylight: ${daylightPercentage.toFixed(1)}%`, mouseX + 15, mouseY - 20);
+    text(`Score: ${score.toFixed(0)}`, mouseX + 15, mouseY - 5);
   }
 
   // Draw all permanent rectangles with their scores
@@ -213,18 +228,7 @@ function displayHoverInfo() {
   if (boxY < 5) {
     boxY = 5;
   }
-  
-  // Display info box
-  fill(255, 255, 255, 220);
-  stroke(0);
-  rect(boxX, boxY, boxWidth, boxHeight);
-  
-  // Display text inside the box
-  noStroke();
-  fill(0);
-  text(`Sun Hours: ${daylightHours.toFixed(1)}/${totalImages}`, boxX + 10, boxY + 12);
-  text(`Daylight: ${daylightPercentage.toFixed(1)}%`, boxX + 10, boxY + 28);
-  
+
   // Draw a small crosshair at the pixel
   stroke(255, 0, 0);
   line(x - 5, y, x + 5, y);
@@ -259,21 +263,21 @@ function keyPressed() {
     rectWidth = max(1, rectWidth - (isVertical ? 1 : 2));
     rectHeight = max(1, rectHeight - (isVertical ? 2 : 1));
     console.log(`Rectangle size decreased to: ${rectWidth}x${rectHeight}`);
-  } else if (key === 'c' || key === 'C') {
-    // Calculate the score of the rectangle
-    if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
-      let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
-      console.log(`Rectangle score: ${score}`);
+  }
+}
 
-      // Store the rectangle and its score
-      permanentRectangles.push({
-        x: mouseX,
-        y: mouseY,
-        w: rectWidth,
-        h: rectHeight,
-        score: score
-      });
-    }
+function mousePressed() {
+  // Save the rectangle and its score when the mouse is clicked
+  if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+    let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+    permanentRectangles.push({
+      x: mouseX,
+      y: mouseY,
+      w: rectWidth,
+      h: rectHeight,
+      score: score
+    });
+    console.log(`Saved rectangle at (${mouseX}, ${mouseY}) with score: ${score}`);
   }
 }
 
