@@ -13,7 +13,7 @@ function preload() {
   for (let i = 1; i <= totalImages; i++) {
     // Assuming images are named image1.jpg, image2.jpg, etc.
     // let img = loadImage(`images/image${i}.jpg`, 
-    let img = loadImage(`images3/1212 Garfield_SU_${i}.png`, 
+    let img = loadImage(`images/3/1212Garfield_SU_${i}.png`, 
       // Success callback
       () => { loaded++; },
       // Error callback 
