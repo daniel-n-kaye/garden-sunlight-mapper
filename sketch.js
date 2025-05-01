@@ -18,37 +18,59 @@ let isVertical = true;
 
 let permanentRectangles = []; // Store permanent rectangles and their scores
 
+let loadingBar; // HTML element for the loading bar
+let loadingText; // HTML element for the loading text
+
 function preload() {
+  // Create the loading bar and text
+  loadingBar = createDiv('').style('width', '0%').style('height', '20px').style('background', 'green');
+  loadingText = createDiv('Loading: 0%').style('margin-top', '5px').style('text-align', 'center').style('color', 'white');
+  let loadingContainer = createDiv('').style('width', '60%').style('margin', 'auto').style('margin-top', '20px').style('background', 'gray');
+  loadingContainer.child(loadingBar);
+  loadingContainer.child(loadingText);
+
   // Preload all images
   for (let i = 1; i <= totalImages; i++) {
-    // Assuming images are named image1.jpg, image2.jpg, etc.
-    // let img = loadImage(`images/image${i}.jpg`, 
-    let img = loadImage(`images/3/1212Garfield_SU_${i}.png`, 
+    let img = loadImage(
+      `images/3/1212Garfield_SU_${i}.png`,
       // Success callback
-      () => { loaded++; },
-      // Error callback 
+      () => {
+        loaded++;
+        updateLoadingBar(); // Update the loading bar as each image loads
+      },
+      // Error callback
       () => { console.error(`Failed to load image${i}.jpg`); }
     );
     images.push(img);
   }
 }
 
-function setup() {
+function updateLoadingBar() {
+  // Update the loading bar and text
+  let progress = (loaded / totalImages) * 100;
+  loadingBar.style('width', `${progress}%`);
+  loadingText.html(`Loading: ${Math.floor(progress)}%`);
+}
 
-  // create canvas
+function setup() {
+  // Remove the loading bar once loading is complete
+  if (loadingBar) loadingBar.remove();
+  if (loadingText) loadingText.remove();
+
+  // Create canvas
   createCanvas(images[0].width, images[0].height);
-  
+
   // Create heatmap image with same dimensions
   heatMap = createImage(width, height);
-  
+
   // Generate the heat map
   generateHeatMap();
-  
+
   // Display information
   console.log(`Analyzed ${totalImages} images`);
   console.log('White pixels: Sunny in all images');
   console.log('Black pixels: Shady in all images');
-  console.log('Gray values: Number of sunny hours (from 1 to ' + (totalImages-1) + ')');
+  console.log('Gray values: Number of sunny hours (from 1 to ' + (totalImages - 1) + ')');
 }
 
 function draw() {
