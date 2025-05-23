@@ -39,10 +39,11 @@ function setup() {
 
 function loadImages() {
   for (let i = 1; i <= totalImages; i++) {
-    let img = loadImage(
+    loadImage(
       `images/3/1212Garfield_SU_${i}.png`,
       // Success callback
-      () => {
+      (img) => {
+        images.push(img); // Only push if loaded successfully
         loaded++;
         updateLoadingBar();
         if (loaded === totalImages) {
@@ -51,20 +52,42 @@ function loadImages() {
           loadingBar.remove();
           loadingText.remove();
 
-          // Resize canvas to match image dimensions
-          resizeCanvas(images[0].width, images[0].height);
+          // Check if at least one image loaded
+          if (images.length > 0 && images[0]) {
+            resizeCanvas(images[0].width, images[0].height);
 
-          // Create heatmap image with same dimensions
-          heatMap = createImage(width, height);
+            // Create heatmap image with same dimensions
+            heatMap = createImage(width, height);
 
-          // Generate the heat map
-          generateHeatMap();
+            // Generate the heat map
+            generateHeatMap();
+          } else {
+            // No images loaded successfully
+            createP('No images loaded. Please check your image paths.').style('color', 'red');
+          }
         }
       },
       // Error callback
-      () => { console.error(`Failed to load image${i}.png`); }
+      () => {
+        loaded++;
+        updateLoadingBar();
+        // Don't push undefined images
+        console.error(`Failed to load image ${i}.png`);
+        // If all attempted, still remove loading UI
+        if (loaded === totalImages) {
+          isLoading = false;
+          loadingBar.remove();
+          loadingText.remove();
+          if (images.length > 0 && images[0]) {
+            resizeCanvas(images[0].width, images[0].height);
+            heatMap = createImage(width, height);
+            generateHeatMap();
+          } else {
+            createP('No images loaded. Please check your image paths.').style('color', 'red');
+          }
+        }
+      }
     );
-    images.push(img);
   }
 }
 
@@ -83,7 +106,7 @@ function draw() {
     textSize(24);
     textAlign(CENTER, CENTER);
     text('Loading images, please wait...', width / 2, height / 2);
-  } else {
+  } else if (heatMap) { // Only draw if heatMap is defined
     // Display the heat map
     image(heatMap, 0, 0);
 
@@ -128,6 +151,13 @@ function draw() {
       textAlign(CENTER, CENTER);
       text(`Score: ${garden.score}`, garden.x, garden.y);
     }
+  } else {
+    // Optionally, show a message if heatMap is not ready
+    background(50);
+    fill(255, 0, 0);
+    textSize(20);
+    textAlign(CENTER, CENTER);
+    text('Heatmap not available. Check image loading.', width / 2, height / 2);
   }
 }
 
@@ -299,6 +329,7 @@ function mousePressed() {
 
 function calculateRectangleScore(x, y, w, h) {
   let score = 0;
+  if (!heatMap) return 0; // Prevent error if heatMap is undefined
   heatMap.loadPixels();
 
   // Iterate over the pixels within the rectangle
