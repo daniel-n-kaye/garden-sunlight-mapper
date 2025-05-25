@@ -19,10 +19,11 @@ let isVertical = true;
 let permanentRectangles = []; // Store permanent rectangles and their scores
 
 let isLoading = true; // Track loading state
+let loadingStage = 'images'; // 'images' or 'heatmap'
 
 function setup() {
   // Create canvas
-  createCanvas(800, 600); // Temporary size until images are loaded
+  createCanvas(1280, 720); // size of dan's images
 
   // Start loading images
   loadImages();
@@ -47,6 +48,7 @@ function loadImages() {
 
             // Start generating the heat map asynchronously, don't await
             isLoading = true;
+            loadingStage = 'heatmap';
             generateHeatMap().then(() => {
               isLoading = false;
               redraw();
@@ -68,6 +70,7 @@ function loadImages() {
             resizeCanvas(images[0].width, images[0].height);
             heatMap = createImage(width, height);
             isLoading = true;
+            loadingStage = 'heatmap';
             generateHeatMap().then(() => {
               isLoading = false;
               redraw();
@@ -96,7 +99,8 @@ function draw() {
     fill(255);
     textSize(24);
     textAlign(CENTER, CENTER);
-    text(`Loading images...`, width / 2, height * 0.8);
+    let loadingText = loadingStage === 'images' ? 'Loading images...' : 'Generating heatmap...';
+    text(loadingText, width / 2, height * 0.8);
   } else if (heatMap) { // Only draw if heatMap is defined
     // Display the heat map
     image(heatMap, 0, 0);
@@ -280,6 +284,7 @@ function keyPressed() {
   if (keyCode === UP_ARROW) {
     threshold = min(threshold + 10, 255);
     isLoading = true;
+    loadingStage = 'heatmap';
     generateHeatMap().then(() => {
       isLoading = false;
       redraw();
@@ -288,6 +293,7 @@ function keyPressed() {
   } else if (keyCode === DOWN_ARROW) {
     threshold = max(threshold - 10, 0);
     isLoading = true;
+    loadingStage = 'heatmap';
     generateHeatMap().then(() => {
       isLoading = false;
       redraw();
@@ -357,6 +363,13 @@ function drawLoadingAnimation(grow) {
   let maxLeafLength = 120;
   let maxLeafWidth = 40;
 
+  // Draw rotated leaves (but not the stem)
+  push();
+  // Rotate so the vertical stem splits the angle between the two bottom leaves
+  // The angle between leaves is TWO_PI / numLeaves, so rotate by half that
+  let leafRotation = PI / numLeaves;
+  rotate(leafRotation);
+
   for (let i = 0; i < numLeaves; i++) {
     let angle = map(i, 0, numLeaves, 0, TWO_PI);
     // Each leaf animates with a phase offset for more organic motion
@@ -366,11 +379,12 @@ function drawLoadingAnimation(grow) {
     drawLeaf(0, 0, maxLeafLength * leafGrow, maxLeafWidth * leafGrow, color(60, 180, 90, 200));
     pop();
   }
+  pop();
 
-  // Draw a stem
+  // Draw a non-animated, much longer stem on top, always vertical
   stroke(60, 120, 60);
-  strokeWeight(6 * grow);
-  line(0, 0, 0, 40 * grow);
+  strokeWeight(6);
+  line(0, 0, 0, 120); // 3x longer than before (was 40)
 
   pop();
 }
