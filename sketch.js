@@ -112,38 +112,41 @@ function draw() {
       displayHoverInfo();
     }
 
-    // Draw a rectangle centered on the cursor
+    // Draw a rectangle centered above the cursor (with offset for text visibility)
     if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+      // Offset so rectangle is just above the cursor, and text is centered in the rect
+      const rectYOffset = -rectHeight / 2 - 8; // 8px above cursor, less than before
+
       noFill();
-      stroke(0, 255, 0); // Green outline
-      rect(mouseX - rectWidth / 2, mouseY - rectHeight / 2, rectWidth, rectHeight);
+      // Modern blue for placing phase (before optimizing)
+      stroke(40, 120, 255); // Vibrant blue
+      strokeWeight(3);
+      rect(mouseX - rectWidth / 2, mouseY + rectYOffset - rectHeight / 2, rectWidth, rectHeight);
+      strokeWeight(1);
 
       // Calculate the score and daylight percentage for the rectangle at the mouse position
-      let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+      let score = calculateRectangleScore(mouseX, mouseY + rectYOffset, rectWidth, rectHeight);
       let daylightPercentage = map(score / (rectWidth * rectHeight), 0, 255, 0, 100);
 
-      // Display the score and daylight percentage at the mouse cursor
-      fill(255, 255, 255, 220);
-      stroke(0);
-      rect(mouseX + 10, mouseY - 30, 120, 40); // Background for text
-      noStroke();
+      // Centered % daylight, centered in the rectangle
       fill(0);
-      textSize(12);
-      textAlign(LEFT, CENTER);
-      text(`Daylight: ${daylightPercentage.toFixed(1)}%`, mouseX + 15, mouseY - 20);
-      text(`Score: ${score.toFixed(0)}`, mouseX + 15, mouseY - 5);
+      noStroke();
+      textSize(14);
+      textAlign(CENTER, CENTER);
+      text(`${daylightPercentage.toFixed(2)}%`, mouseX, mouseY + rectYOffset);
     }
 
     // Track best rectangle as mouse moves
     if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
       // Calculate the score for the current rectangle
-      let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+      const rectYOffset = -rectHeight / 2 - 8;
+      let score = calculateRectangleScore(mouseX, mouseY + rectYOffset, rectWidth, rectHeight);
 
       // If this is the best score so far, update bestRectangle
       if (!bestRectangle || score > bestRectangle.score) {
         bestRectangle = {
           x: mouseX,
-          y: mouseY,
+          y: mouseY + rectYOffset,
           w: rectWidth,
           h: rectHeight,
           score: score
@@ -197,8 +200,11 @@ function draw() {
     // Draw all permanent rectangles with their scores
     for (let garden of permanentRectangles) {
       noFill();
-      stroke(255, 0, 0); // Red outline for permanent rectangles
+      // Deep forest green for done/best
+      stroke(20, 80, 40); // Deep forest green
+      strokeWeight(3);
       rect(garden.x - garden.w / 2, garden.y - garden.h / 2, garden.w, garden.h);
+      strokeWeight(1);
       fill(0);
       noStroke();
       textSize(14);
@@ -211,7 +217,8 @@ function draw() {
     // Draw the moving rectangle (if it exists)
     if (movingRectangle) {
       noFill();
-      stroke(0, 0, 255); // Blue outline for moving rectangle
+      // Modern orange for optimizing phase
+      stroke(255, 140, 40); // Orange
       strokeWeight(3);
       rect(
         movingRectangle.x - movingRectangle.w / 2,
@@ -219,6 +226,7 @@ function draw() {
         movingRectangle.w,
         movingRectangle.h
       );
+      strokeWeight(1);
       fill(0); // Black text for better contrast
       noStroke();
       textSize(14);
@@ -230,7 +238,6 @@ function draw() {
         movingRectangle.x,
         movingRectangle.y
       );
-      strokeWeight(1);
     }
   } else {
     // Optionally, show a message if heatMap is not ready
@@ -359,10 +366,10 @@ function displayHoverInfo() {
     boxY = 5;
   }
 
-  // Draw a small crosshair at the pixel
-  stroke(255, 0, 0);
-  line(x - 5, y, x + 5, y);
-  line(x, y - 5, x, y + 5);
+  // Removed: Draw a small crosshair at the pixel
+  // stroke(255, 0, 0);
+  // line(x - 5, y, x + 5, y);
+  // line(x, y - 5, x, y + 5);
 }
 
 // Optional: Add functionality to adjust threshold via keyboard
@@ -409,17 +416,18 @@ function keyPressed() {
 function mousePressed() {
   // Start a new moving rectangle search from the clicked position
   if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
-    let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+    const rectYOffset = -rectHeight / 2 - 8;
+    let score = calculateRectangleScore(mouseX, mouseY + rectYOffset, rectWidth, rectHeight);
     movingRectangle = {
       x: mouseX,
-      y: mouseY,
+      y: mouseY + rectYOffset,
       w: rectWidth,
       h: rectHeight,
       score: score,
       searching: true
     };
     // Do not push to permanentRectangles here; only after hill climbing is done
-    console.log(`Started rectangle search at (${mouseX}, ${mouseY}) with score: ${score}`);
+    console.log(`Started rectangle search at (${mouseX}, ${mouseY + rectYOffset}) with score: ${score}`);
   }
 }
 
