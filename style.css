@@ -2,6 +2,18 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  background: #32402a; /* optional: match your app's background */
+}
+
 canvas {
   display: block;
+  margin: 32px 0; /* optional: add some vertical spacing */
+  border-radius: 16px;
 }

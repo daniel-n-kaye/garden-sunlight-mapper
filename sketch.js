@@ -118,8 +118,8 @@ function draw() {
       const rectYOffset = -rectHeight / 2 - 8; // 8px above cursor, less than before
 
       noFill();
-      // Modern blue for placing phase (before optimizing)
-      stroke(40, 120, 255); // Vibrant blue
+      // Light green for placing phase (matches loading screen leaf)
+      stroke(60, 180, 90); // Light green
       strokeWeight(3);
       rect(mouseX - rectWidth / 2, mouseY + rectYOffset - rectHeight / 2, rectWidth, rectHeight);
       strokeWeight(1);
@@ -249,8 +249,8 @@ function draw() {
   }
 }
 
-// Make generateHeatMap async
 async function generateHeatMap() {
+
   // Load all pixels for processing
   heatMap.loadPixels();
   images.forEach(img => img.loadPixels());
@@ -374,25 +374,7 @@ function displayHoverInfo() {
 
 // Optional: Add functionality to adjust threshold via keyboard
 function keyPressed() {
-  if (keyCode === UP_ARROW) {
-    threshold = min(threshold + 10, 255);
-    isLoading = true;
-    loadingStage = 'heatmap';
-    generateHeatMap().then(() => {
-      isLoading = false;
-      redraw();
-    });
-    console.log("Threshold increased to: " + threshold);
-  } else if (keyCode === DOWN_ARROW) {
-    threshold = max(threshold - 10, 0);
-    isLoading = true;
-    loadingStage = 'heatmap';
-    generateHeatMap().then(() => {
-      isLoading = false;
-      redraw();
-    });
-    console.log("Threshold decreased to: " + threshold);
-  } else if (key === 's' || key === 'S') {
+  if (key === 's' || key === 'S') {
     saveCanvas('sun_study_heatmap', 'png');
     console.log("Heatmap saved!");
   } else if (key === ' ') {
