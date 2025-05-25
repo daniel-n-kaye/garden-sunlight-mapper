@@ -22,6 +22,7 @@ let isLoading = true; // Track loading state
 let loadingStage = 'images'; // 'images' or 'heatmap'
 
 let bestRectangle = null; // Track the best rectangle hovered so far
+let movingRectangle = null; // Only the currently "hill climbing" rectangle
 
 function setup() {
   // Create canvas
@@ -87,10 +88,6 @@ function loadImages() {
   }
 }
 
-// function updateLoadingBar() {
-//   // No longer needed, but keep for compatibility if called
-// }
-
 function draw() {
   if (isLoading) {
     // Draw animated loading screen on canvas
@@ -154,30 +151,82 @@ function draw() {
       }
     }
 
+    // Hill climbing for the moving rectangle
+    if (movingRectangle && movingRectangle.searching) {
+      let directions = [
+        {dx: 0, dy: -1},   // N
+        {dx: 1, dy: -1},   // NE
+        {dx: 1, dy: 0},    // E
+        {dx: 1, dy: 1},    // SE
+        {dx: 0, dy: 1},    // S
+        {dx: -1, dy: 1},   // SW
+        {dx: -1, dy: 0},   // W
+        {dx: -1, dy: -1},  // NW
+      ];
+      let bestScore = movingRectangle.score;
+      let bestPos = {x: movingRectangle.x, y: movingRectangle.y};
+      for (let dir of directions) {
+        let nx = movingRectangle.x + dir.dx;
+        let ny = movingRectangle.y + dir.dy;
+        if (
+          nx - movingRectangle.w / 2 >= 0 &&
+          nx + movingRectangle.w / 2 < width &&
+          ny - movingRectangle.h / 2 >= 0 &&
+          ny + movingRectangle.h / 2 < height
+        ) {
+          let score = calculateRectangleScore(nx, ny, movingRectangle.w, movingRectangle.h);
+          if (score > bestScore) {
+            bestScore = score;
+            bestPos = {x: nx, y: ny};
+          }
+        }
+      }
+      if (bestScore > movingRectangle.score) {
+        movingRectangle.x = bestPos.x;
+        movingRectangle.y = bestPos.y;
+        movingRectangle.score = bestScore;
+        // searching remains true
+      } else {
+        // No better neighbor, stop searching and make it permanent
+        movingRectangle.searching = false;
+        permanentRectangles.push({...movingRectangle});
+        movingRectangle = null;
+      }
+    }
+
     // Draw all permanent rectangles with their scores
     for (let garden of permanentRectangles) {
       noFill();
       stroke(255, 0, 0); // Red outline for permanent rectangles
       rect(garden.x - garden.w / 2, garden.y - garden.h / 2, garden.w, garden.h);
-      fill(255, 255, 255, 200); // Semi-transparent background for text
+      fill(255, 255, 255, 200);
       noStroke();
       textSize(12);
       textAlign(CENTER, CENTER);
       text(`Score: ${garden.score}`, garden.x, garden.y);
     }
 
-    // Draw the best rectangle (if it exists)
-    if (bestRectangle) {
+    // Draw the moving rectangle (if it exists)
+    if (movingRectangle) {
       noFill();
-      stroke(0, 0, 255); // Blue outline for best rectangle
+      stroke(0, 0, 255); // Blue outline for moving rectangle
       strokeWeight(3);
-      rect(bestRectangle.x - bestRectangle.w / 2, bestRectangle.y - bestRectangle.h / 2, bestRectangle.w, bestRectangle.h);
+      rect(
+        movingRectangle.x - movingRectangle.w / 2,
+        movingRectangle.y - movingRectangle.h / 2,
+        movingRectangle.w,
+        movingRectangle.h
+      );
       fill(255, 255, 255, 220);
       noStroke();
       textSize(14);
       textAlign(CENTER, CENTER);
-      text(`Best Score: ${bestRectangle.score}`, bestRectangle.x, bestRectangle.y - bestRectangle.h / 2 - 15);
-      strokeWeight(1); // Reset stroke weight
+      text(
+        `Best Score: ${movingRectangle.score}`,
+        movingRectangle.x,
+        movingRectangle.y - movingRectangle.h / 2 - 15
+      );
+      strokeWeight(1);
     }
   } else {
     // Optionally, show a message if heatMap is not ready
@@ -354,17 +403,19 @@ function keyPressed() {
 }
 
 function mousePressed() {
-  // Save the rectangle and its score when the mouse is clicked
+  // Start a new moving rectangle search from the clicked position
   if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
     let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
-    permanentRectangles.push({
+    movingRectangle = {
       x: mouseX,
       y: mouseY,
       w: rectWidth,
       h: rectHeight,
-      score: score
-    });
-    console.log(`Saved rectangle at (${mouseX}, ${mouseY}) with score: ${score}`);
+      score: score,
+      searching: true
+    };
+    // Do not push to permanentRectangles here; only after hill climbing is done
+    console.log(`Started rectangle search at (${mouseX}, ${mouseY}) with score: ${score}`);
   }
 }
 
