@@ -201,9 +201,11 @@ function draw() {
       rect(garden.x - garden.w / 2, garden.y - garden.h / 2, garden.w, garden.h);
       fill(255, 255, 255, 200);
       noStroke();
-      textSize(12);
+      textSize(14);
       textAlign(CENTER, CENTER);
-      text(`Score: ${garden.score}`, garden.x, garden.y);
+      // Calculate daylight percentage for this rectangle
+      let daylightPercentage = map(garden.score / (garden.w * garden.h), 0, 255, 0, 100);
+      text(`${daylightPercentage.toFixed(2)}%`, garden.x, garden.y);
     }
 
     // Draw the moving rectangle (if it exists)
@@ -221,10 +223,12 @@ function draw() {
       noStroke();
       textSize(14);
       textAlign(CENTER, CENTER);
+      // Calculate daylight percentage for moving rectangle
+      let daylightPercentage = map(movingRectangle.score / (movingRectangle.w * movingRectangle.h), 0, 255, 0, 100);
       text(
-        `Best Score: ${movingRectangle.score}`,
+        `${daylightPercentage.toFixed(2)}%`,
         movingRectangle.x,
-        movingRectangle.y - movingRectangle.h / 2 - 15
+        movingRectangle.y
       );
       strokeWeight(1);
     }
