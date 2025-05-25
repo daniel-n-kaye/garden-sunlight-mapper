@@ -359,20 +359,17 @@ function drawLoadingAnimation(grow) {
   push();
   translate(width / 2, height / 2);
 
-  let numLeaves = 6;
-  let maxLeafLength = 120;
+  let numLeaves = 8;
+  let maxLeafLength = 75; 
   let maxLeafWidth = 40;
 
-  // Draw rotated leaves (but not the stem)
+  // Draw rotated leaves
   push();
-  // Rotate so the vertical stem splits the angle between the two bottom leaves
-  // The angle between leaves is TWO_PI / numLeaves, so rotate by half that
   let leafRotation = PI / numLeaves;
   rotate(leafRotation);
 
   for (let i = 0; i < numLeaves; i++) {
     let angle = map(i, 0, numLeaves, 0, TWO_PI);
-    // Each leaf animates with a phase offset for more organic motion
     let leafGrow = grow * (0.85 + 0.15 * sin(frameCount * 0.06 + i));
     push();
     rotate(angle + sin(frameCount * 0.01 + i) * 0.1);
@@ -381,15 +378,15 @@ function drawLoadingAnimation(grow) {
   }
   pop();
 
-  // Draw a non-animated, much longer stem on top, always vertical
+  // Draw a non-animated, much longer, skinnier stem on top, always vertical
   stroke(60, 120, 60);
-  strokeWeight(6);
-  line(0, 0, 0, 120); // 3x longer than before (was 40)
+  strokeWeight(3);
+  line(0, 0, 0, 120);
 
   pop();
 }
 
-// Helper to draw a single leaf shape
+// Helper to draw a single leaf shape (no veins)
 function drawLeaf(x, y, len, wid, col) {
   fill(col);
   noStroke();
