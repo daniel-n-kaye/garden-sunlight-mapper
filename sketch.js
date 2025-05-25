@@ -21,6 +21,8 @@ let permanentRectangles = []; // Store permanent rectangles and their scores
 let isLoading = true; // Track loading state
 let loadingStage = 'images'; // 'images' or 'heatmap'
 
+let bestRectangle = null; // Track the best rectangle hovered so far
+
 function setup() {
   // Create canvas
   createCanvas(1280, 720); // size of dan's images
@@ -135,6 +137,23 @@ function draw() {
       text(`Score: ${score.toFixed(0)}`, mouseX + 15, mouseY - 5);
     }
 
+    // Track best rectangle as mouse moves
+    if (mouseX >= 0 && mouseX < width && mouseY >= 0 && mouseY < height) {
+      // Calculate the score for the current rectangle
+      let score = calculateRectangleScore(mouseX, mouseY, rectWidth, rectHeight);
+
+      // If this is the best score so far, update bestRectangle
+      if (!bestRectangle || score > bestRectangle.score) {
+        bestRectangle = {
+          x: mouseX,
+          y: mouseY,
+          w: rectWidth,
+          h: rectHeight,
+          score: score
+        };
+      }
+    }
+
     // Draw all permanent rectangles with their scores
     for (let garden of permanentRectangles) {
       noFill();
@@ -145,6 +164,20 @@ function draw() {
       textSize(12);
       textAlign(CENTER, CENTER);
       text(`Score: ${garden.score}`, garden.x, garden.y);
+    }
+
+    // Draw the best rectangle (if it exists)
+    if (bestRectangle) {
+      noFill();
+      stroke(0, 0, 255); // Blue outline for best rectangle
+      strokeWeight(3);
+      rect(bestRectangle.x - bestRectangle.w / 2, bestRectangle.y - bestRectangle.h / 2, bestRectangle.w, bestRectangle.h);
+      fill(255, 255, 255, 220);
+      noStroke();
+      textSize(14);
+      textAlign(CENTER, CENTER);
+      text(`Best Score: ${bestRectangle.score}`, bestRectangle.x, bestRectangle.y - bestRectangle.h / 2 - 15);
+      strokeWeight(1); // Reset stroke weight
     }
   } else {
     // Optionally, show a message if heatMap is not ready
