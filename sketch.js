@@ -24,12 +24,23 @@ let loadingStage = 'images'; // 'images' or 'heatmap'
 let bestRectangle = null; // Track the best rectangle hovered so far
 let movingRectangle = null; // Only the currently "hill climbing" rectangle
 
+let hillClimbEnabled = true; // Default: optimization on
+
 function setup() {
   // Create canvas
   createCanvas(1280, 720); // size of dan's images
 
   // Start loading images
   loadImages();
+
+  // Listen for checkbox changes
+  const checkbox = document.getElementById('hillClimbToggle');
+  if (checkbox) {
+    hillClimbEnabled = checkbox.checked;
+    checkbox.addEventListener('change', function() {
+      hillClimbEnabled = this.checked;
+    });
+  }
 }
 
 function loadImages() {
@@ -156,44 +167,51 @@ function draw() {
 
     // Hill climbing for the moving rectangle
     if (movingRectangle && movingRectangle.searching) {
-      let directions = [
-        {dx: 0, dy: -1},   // N
-        {dx: 1, dy: -1},   // NE
-        {dx: 1, dy: 0},    // E
-        {dx: 1, dy: 1},    // SE
-        {dx: 0, dy: 1},    // S
-        {dx: -1, dy: 1},   // SW
-        {dx: -1, dy: 0},   // W
-        {dx: -1, dy: -1},  // NW
-      ];
-      let bestScore = movingRectangle.score;
-      let bestPos = {x: movingRectangle.x, y: movingRectangle.y};
-      for (let dir of directions) {
-        let nx = movingRectangle.x + dir.dx;
-        let ny = movingRectangle.y + dir.dy;
-        if (
-          nx - movingRectangle.w / 2 >= 0 &&
-          nx + movingRectangle.w / 2 < width &&
-          ny - movingRectangle.h / 2 >= 0 &&
-          ny + movingRectangle.h / 2 < height
-        ) {
-          let score = calculateRectangleScore(nx, ny, movingRectangle.w, movingRectangle.h);
-          if (score > bestScore) {
-            bestScore = score;
-            bestPos = {x: nx, y: ny};
-          }
-        }
-      }
-      if (bestScore > movingRectangle.score) {
-        movingRectangle.x = bestPos.x;
-        movingRectangle.y = bestPos.y;
-        movingRectangle.score = bestScore;
-        // searching remains true
-      } else {
-        // No better neighbor, stop searching and make it permanent
+      if (!hillClimbEnabled) {
+        // If optimization is off, immediately make it permanent and stop searching
         movingRectangle.searching = false;
         permanentRectangles.push({...movingRectangle});
         movingRectangle = null;
+      } else {
+        let directions = [
+          {dx: 0, dy: -1},   // N
+          {dx: 1, dy: -1},   // NE
+          {dx: 1, dy: 0},    // E
+          {dx: 1, dy: 1},    // SE
+          {dx: 0, dy: 1},    // S
+          {dx: -1, dy: 1},   // SW
+          {dx: -1, dy: 0},   // W
+          {dx: -1, dy: -1},  // NW
+        ];
+        let bestScore = movingRectangle.score;
+        let bestPos = {x: movingRectangle.x, y: movingRectangle.y};
+        for (let dir of directions) {
+          let nx = movingRectangle.x + dir.dx;
+          let ny = movingRectangle.y + dir.dy;
+          if (
+            nx - movingRectangle.w / 2 >= 0 &&
+            nx + movingRectangle.w / 2 < width &&
+            ny - movingRectangle.h / 2 >= 0 &&
+            ny + movingRectangle.h / 2 < height
+          ) {
+            let score = calculateRectangleScore(nx, ny, movingRectangle.w, movingRectangle.h);
+            if (score > bestScore) {
+              bestScore = score;
+              bestPos = {x: nx, y: ny};
+            }
+          }
+        }
+        if (bestScore > movingRectangle.score) {
+          movingRectangle.x = bestPos.x;
+          movingRectangle.y = bestPos.y;
+          movingRectangle.score = bestScore;
+          // searching remains true
+        } else {
+          // No better neighbor, stop searching and make it permanent
+          movingRectangle.searching = false;
+          permanentRectangles.push({...movingRectangle});
+          movingRectangle = null;
+        }
       }
     }
 
