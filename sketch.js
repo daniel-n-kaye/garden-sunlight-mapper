@@ -18,20 +18,11 @@ let isVertical = true;
 
 let permanentRectangles = []; // Store permanent rectangles and their scores
 
-let loadingBar; // HTML element for the loading bar
-let loadingText; // HTML element for the loading text
 let isLoading = true; // Track loading state
 
 function setup() {
   // Create canvas
   createCanvas(800, 600); // Temporary size until images are loaded
-
-  // Create loading bar and text
-  loadingBar = createDiv('').style('width', '0%').style('height', '20px').style('background', 'green');
-  loadingText = createDiv('Loading: 0%').style('margin-top', '5px').style('text-align', 'center').style('color', 'white');
-  let loadingContainer = createDiv('').style('width', '60%').style('margin', 'auto').style('margin-top', '20px').style('background', 'gray');
-  loadingContainer.child(loadingBar);
-  loadingContainer.child(loadingText);
 
   // Start loading images
   loadImages();
@@ -42,16 +33,11 @@ function loadImages() {
     loadImage(
       `images/3/1212Garfield_SU_${i}.png`,
       // Success callback
-      (img) => {
+      async (img) => {
         images.push(img); // Only push if loaded successfully
         loaded++;
-        updateLoadingBar();
         if (loaded === totalImages) {
           // All images loaded
-          isLoading = false;
-          loadingBar.remove();
-          loadingText.remove();
-
           // Check if at least one image loaded
           if (images.length > 0 && images[0]) {
             resizeCanvas(images[0].width, images[0].height);
@@ -59,31 +45,36 @@ function loadImages() {
             // Create heatmap image with same dimensions
             heatMap = createImage(width, height);
 
-            // Generate the heat map
-            generateHeatMap();
+            // Start generating the heat map asynchronously, don't await
+            isLoading = true;
+            generateHeatMap().then(() => {
+              isLoading = false;
+              redraw();
+            });
           } else {
-            // No images loaded successfully
             createP('No images loaded. Please check your image paths.').style('color', 'red');
+            isLoading = false;
           }
         }
       },
       // Error callback
       () => {
         loaded++;
-        updateLoadingBar();
         // Don't push undefined images
         console.error(`Failed to load image ${i}.png`);
         // If all attempted, still remove loading UI
         if (loaded === totalImages) {
-          isLoading = false;
-          loadingBar.remove();
-          loadingText.remove();
           if (images.length > 0 && images[0]) {
             resizeCanvas(images[0].width, images[0].height);
             heatMap = createImage(width, height);
-            generateHeatMap();
+            isLoading = true;
+            generateHeatMap().then(() => {
+              isLoading = false;
+              redraw();
+            });
           } else {
             createP('No images loaded. Please check your image paths.').style('color', 'red');
+            isLoading = false;
           }
         }
       }
@@ -91,21 +82,21 @@ function loadImages() {
   }
 }
 
-function updateLoadingBar() {
-  // Update the loading bar and text
-  let progress = (loaded / totalImages) * 100;
-  loadingBar.style('width', `${progress}%`);
-  loadingText.html(`Loading: ${Math.floor(progress)}%`);
-}
+// function updateLoadingBar() {
+//   // No longer needed, but keep for compatibility if called
+// }
 
 function draw() {
   if (isLoading) {
-    // Display loading screen
-    background(50);
+    // Draw animated loading screen on canvas
+    background(50, 80, 60);
+    // Animate grow value endlessly back and forth using sine wave (continuous)
+    let grow = 0.6 + 0.4 * sin(frameCount * 0.08); // range: 0.2 to 1.0, oscillates forever
+    drawLoadingAnimation(grow);
     fill(255);
     textSize(24);
     textAlign(CENTER, CENTER);
-    text('Loading images, please wait...', width / 2, height / 2);
+    text(`Loading images...`, width / 2, height * 0.8);
   } else if (heatMap) { // Only draw if heatMap is defined
     // Display the heat map
     image(heatMap, 0, 0);
@@ -161,7 +152,8 @@ function draw() {
   }
 }
 
-function generateHeatMap() {
+// Make generateHeatMap async
+async function generateHeatMap() {
   // Load all pixels for processing
   heatMap.loadPixels();
   images.forEach(img => img.loadPixels());
@@ -202,6 +194,8 @@ function generateHeatMap() {
       heatMap.pixels[index + 2] = sunValue; // B
       heatMap.pixels[index + 3] = 255;      // Alpha (fully opaque)
     }
+    // Yield to UI every 20 columns to keep loading animation responsive
+    if (x % 20 === 0) await new Promise(r => setTimeout(r, 0));
   }
 
   // Update the heat map with new pixel values
@@ -285,11 +279,19 @@ function displayHoverInfo() {
 function keyPressed() {
   if (keyCode === UP_ARROW) {
     threshold = min(threshold + 10, 255);
-    generateHeatMap();
+    isLoading = true;
+    generateHeatMap().then(() => {
+      isLoading = false;
+      redraw();
+    });
     console.log("Threshold increased to: " + threshold);
   } else if (keyCode === DOWN_ARROW) {
     threshold = max(threshold - 10, 0);
-    generateHeatMap();
+    isLoading = true;
+    generateHeatMap().then(() => {
+      isLoading = false;
+      redraw();
+    });
     console.log("Threshold decreased to: " + threshold);
   } else if (key === 's' || key === 'S') {
     saveCanvas('sun_study_heatmap', 'png');
@@ -344,4 +346,47 @@ function calculateRectangleScore(x, y, w, h) {
   }
 
   return score;
+}
+
+// Draws a smooth animated leaf loading animation based on grow (0-1)
+function drawLoadingAnimation(grow) {
+  push();
+  translate(width / 2, height / 2);
+
+  let numLeaves = 6;
+  let maxLeafLength = 120;
+  let maxLeafWidth = 40;
+
+  for (let i = 0; i < numLeaves; i++) {
+    let angle = map(i, 0, numLeaves, 0, TWO_PI);
+    // Each leaf animates with a phase offset for more organic motion
+    let leafGrow = grow * (0.85 + 0.15 * sin(frameCount * 0.06 + i));
+    push();
+    rotate(angle + sin(frameCount * 0.01 + i) * 0.1);
+    drawLeaf(0, 0, maxLeafLength * leafGrow, maxLeafWidth * leafGrow, color(60, 180, 90, 200));
+    pop();
+  }
+
+  // Draw a stem
+  stroke(60, 120, 60);
+  strokeWeight(6 * grow);
+  line(0, 0, 0, 40 * grow);
+
+  pop();
+}
+
+// Helper to draw a single leaf shape
+function drawLeaf(x, y, len, wid, col) {
+  fill(col);
+  noStroke();
+  beginShape();
+  vertex(x, y);
+  bezierVertex(x - wid / 2, y - len * 0.3, x - wid / 2, y - len * 0.7, x, y - len);
+  bezierVertex(x + wid / 2, y - len * 0.7, x + wid / 2, y - len * 0.3, x, y);
+  endShape(CLOSE);
+}
+
+// Easing function for smooth growth
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2;
 }
