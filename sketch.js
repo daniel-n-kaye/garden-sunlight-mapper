@@ -199,7 +199,7 @@ function draw() {
       noFill();
       stroke(255, 0, 0); // Red outline for permanent rectangles
       rect(garden.x - garden.w / 2, garden.y - garden.h / 2, garden.w, garden.h);
-      fill(255, 255, 255, 200);
+      fill(0);
       noStroke();
       textSize(14);
       textAlign(CENTER, CENTER);
@@ -219,7 +219,7 @@ function draw() {
         movingRectangle.w,
         movingRectangle.h
       );
-      fill(255, 255, 255, 220);
+      fill(0); // Black text for better contrast
       noStroke();
       textSize(14);
       textAlign(CENTER, CENTER);
